@@ -78,6 +78,7 @@ import com.xilinx.rapidwright.interchange.DeviceResources.Device.ParameterFormat
 import com.xilinx.rapidwright.interchange.LogicalNetlist.Netlist;
 import com.xilinx.rapidwright.interchange.LogicalNetlist.Netlist.Direction;
 import com.xilinx.rapidwright.interchange.LogicalNetlist.Netlist.PropertyMap;
+import com.xilinx.rapidwright.interchange.NodeShape;
 import com.xilinx.rapidwright.interchange.WireType;
 import com.xilinx.rapidwright.tests.CodePerfTracker;
 
@@ -725,14 +726,14 @@ public class DeviceResourcesWriter {
     }
 
     public static void writeAllWiresAndNodesToBuilder(Device device, DeviceResources.Device.Builder devBuilder) {
-        LongEnumerator allWires = new LongEnumerator();
+//        LongEnumerator allWires = new LongEnumerator();
         LongEnumerator allNodes = new LongEnumerator();
 
 
         for(Tile tile : device.getAllTiles()) {
             for(int i=0; i < tile.getWireCount(); i++) {
                 Wire wire = new Wire(tile,i);
-                allWires.addObject(makeKey(wire.getTile(), wire.getWireIndex()));
+//                allWires.addObject(makeKey(wire.getTile(), wire.getWireIndex()));
 
                 Node node = wire.getNode();
                 if(node != null) {
@@ -751,7 +752,7 @@ public class DeviceResourcesWriter {
                 }
             }
         }
-
+/*
         StructList.Builder<DeviceResources.Device.Wire.Builder> wireBuilders =
                 devBuilder.initWires(allWires.size());
 
@@ -764,7 +765,17 @@ public class DeviceResourcesWriter {
             wireBuilder.setWire(allStrings.getIndex(wire.getWireName()));
             wireBuilder.setType(wire.getIntentCode().ordinal());
         }
+*/
+        Enumerator<NodeShape> allNodeShapes = new Enumerator();
 
+        for (long nodeKey : allNodes) {
+            Node node = Node.getNode(device.getTile((int)(nodeKey >>> 32)), (int)(nodeKey & 0xffffffff));
+            allNodeShapes.getIndex(new NodeShape(node, allStrings));
+        }
+
+        System.err.println("nodes: " + allNodes.size());
+        System.err.println("unique node shapes: " + allNodeShapes.size());
+/*
         StructList.Builder<DeviceResources.Device.Node.Builder> nodeBuilders =
                 devBuilder.initNodes(allNodes.size());
         for(int i=0; i < allNodes.size(); i++) {
@@ -778,6 +789,7 @@ public class DeviceResourcesWriter {
                 wBuilders.set(k, allWires.getIndex(makeKey(wires[k].getTile(), wires[k].getWireIndex())));
             }
         }
+*/
     }
     private static void populatePackages(Enumerator<String> allStrings, Device device, DeviceResources.Device.Builder devBuilder) {
         Set<String> packages = device.getPackages();
