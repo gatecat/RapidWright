@@ -641,6 +641,12 @@ public class DeviceResourcesWriter {
                 wires.set(j, allStrings.getIndex(tile.getWireName(j)));
             }
 
+            // wireTypes
+            PrimitiveList.Int.Builder wireTypes = tileType.initWireTypes(tile.getWireCount());
+            for(int j=0 ; j < tile.getWireCount(); j++) {
+                wireTypes.set(j, new Wire(tile, j).getIntentCode().ordinal());
+            }
+
             // pips
             ArrayList<PIP> pips = tile.getPIPs();
             StructList.Builder<DeviceResources.Device.PIP.Builder> pipBuilders =
@@ -726,15 +732,11 @@ public class DeviceResourcesWriter {
     }
 
     public static void writeAllWiresAndNodesToBuilder(Device device, DeviceResources.Device.Builder devBuilder) {
-//        LongEnumerator allWires = new LongEnumerator();
         LongEnumerator allNodes = new LongEnumerator();
-
 
         for(Tile tile : device.getAllTiles()) {
             for(int i=0; i < tile.getWireCount(); i++) {
                 Wire wire = new Wire(tile,i);
-//                allWires.addObject(makeKey(wire.getTile(), wire.getWireIndex()));
-
                 Node node = wire.getNode();
                 if(node != null) {
                     allNodes.addObject(makeKey(node.getTile(), node.getWire()));
@@ -752,44 +754,38 @@ public class DeviceResourcesWriter {
                 }
             }
         }
-/*
-        StructList.Builder<DeviceResources.Device.Wire.Builder> wireBuilders =
-                devBuilder.initWires(allWires.size());
 
-        for(int i=0; i < allWires.size(); i++) {
-            DeviceResources.Device.Wire.Builder wireBuilder = wireBuilders.get(i);
-            long wireKey = allWires.get(i);
-            Wire wire = new Wire(device.getTile((int)(wireKey >>> 32)), (int)(wireKey & 0xffffffff));
-            //Wire wire = allWires.get(i);
-            wireBuilder.setTile(allStrings.getIndex(wire.getTile().getName()));
-            wireBuilder.setWire(allStrings.getIndex(wire.getWireName()));
-            wireBuilder.setType(wire.getIntentCode().ordinal());
-        }
-*/
         Enumerator<NodeShape> allNodeShapes = new Enumerator();
 
         for (long nodeKey : allNodes) {
             Node node = Node.getNode(device.getTile((int)(nodeKey >>> 32)), (int)(nodeKey & 0xffffffff));
-            allNodeShapes.getIndex(new NodeShape(node, allStrings));
         }
 
-        System.err.println("nodes: " + allNodes.size());
-        System.err.println("unique node shapes: " + allNodeShapes.size());
-/*
         StructList.Builder<DeviceResources.Device.Node.Builder> nodeBuilders =
                 devBuilder.initNodes(allNodes.size());
         for(int i=0; i < allNodes.size(); i++) {
             DeviceResources.Device.Node.Builder nodeBuilder = nodeBuilders.get(i);
-            //Node node = allNodes.get(i);
             long nodeKey = allNodes.get(i);
             Node node = Node.getNode(device.getTile((int)(nodeKey >>> 32)), (int)(nodeKey & 0xffffffff));
-            Wire[] wires = node.getAllWiresInNode();
-            PrimitiveList.Int.Builder wBuilders = nodeBuilder.initWires(wires.length);
-            for(int k=0; k < wires.length; k++) {
-                wBuilders.set(k, allWires.getIndex(makeKey(wires[k].getTile(), wires[k].getWireIndex())));
+            int shape = allNodeShapes.getIndex(new NodeShape(node, allStrings));
+            nodeBuilder.setRootTile(allStrings.getIndex(node.getTile().getName()));
+            nodeBuilder.setShape(shape);
+        }
+
+        StructList.Builder<DeviceResources.Device.NodeShape.Builder> nodeShapeBuilders =
+            devBuilder.initNodeShapes(allNodeShapes.size());
+        for(int i=0; i < allNodeShapes.size(); i++) {
+            DeviceResources.Device.NodeShape.Builder nodeShapeBuilder = nodeShapeBuilders.get(i);
+            NodeShape shape = allNodeShapes.get(i);
+            StructList.Builder<DeviceResources.Device.NodeWire.Builder> nodeWireBuilders =
+                nodeShapeBuilder.initWires(shape.dx.length);
+            for (int j = 0; j < shape.dx.length; j++) {
+                DeviceResources.Device.NodeWire.Builder nodeWireBuilder = nodeWireBuilders.get(j);
+                nodeWireBuilder.setDx(shape.dx[j]);
+                nodeWireBuilder.setDy(shape.dy[j]);
+                nodeWireBuilder.setWire(shape.name[j]);
             }
         }
-*/
     }
     private static void populatePackages(Enumerator<String> allStrings, Device device, DeviceResources.Device.Builder devBuilder) {
         Set<String> packages = device.getPackages();
