@@ -734,6 +734,7 @@ public class DeviceResourcesWriter {
     public static void writeAllWiresAndNodesToBuilder(Device device, DeviceResources.Device.Builder devBuilder) {
         LongEnumerator allNodes = new LongEnumerator();
 
+        System.out.println("    discovering nodes...");
         for(Tile tile : device.getAllTiles()) {
             for(int i=0; i < tile.getWireCount(); i++) {
                 Wire wire = new Wire(tile,i);
@@ -757,12 +758,9 @@ public class DeviceResourcesWriter {
 
         Enumerator<NodeShape> allNodeShapes = new Enumerator();
 
-        for (long nodeKey : allNodes) {
-            Node node = Node.getNode(device.getTile((int)(nodeKey >>> 32)), (int)(nodeKey & 0xffffffff));
-        }
-
         StructList.Builder<DeviceResources.Device.Node.Builder> nodeBuilders =
                 devBuilder.initNodes(allNodes.size());
+        System.out.println("    writing " + allNodes.size() + " nodes...");
         for(int i=0; i < allNodes.size(); i++) {
             DeviceResources.Device.Node.Builder nodeBuilder = nodeBuilders.get(i);
             long nodeKey = allNodes.get(i);
@@ -771,7 +769,7 @@ public class DeviceResourcesWriter {
             nodeBuilder.setRootTile(allStrings.getIndex(node.getTile().getName()));
             nodeBuilder.setShape(shape);
         }
-
+        System.out.println("    writing " + allNodeShapes.size() + " node shapes...");
         StructList.Builder<DeviceResources.Device.NodeShape.Builder> nodeShapeBuilders =
             devBuilder.initNodeShapes(allNodeShapes.size());
         for(int i=0; i < allNodeShapes.size(); i++) {
