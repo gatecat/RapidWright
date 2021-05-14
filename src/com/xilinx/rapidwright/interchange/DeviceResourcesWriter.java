@@ -732,7 +732,7 @@ public class DeviceResourcesWriter {
     }
 
     public static void writeAllWiresAndNodesToBuilder(Device device, DeviceResources.Device.Builder devBuilder) {
-        LongEnumerator allNodes = new LongEnumerator();
+        ArrayList<Long> allNodes = new ArrayList();
 
         System.out.println("    discovering nodes...");
         for(Tile tile : device.getAllTiles()) {
@@ -741,8 +741,8 @@ public class DeviceResourcesWriter {
                 Node node = wire.getNode();
                 if(node == null)
                     continue;
-                if (node.getTile() == tile)
-                    allNodes.addObject(makeKey(node.getTile(), node.getWire()));
+                if (node.getTile() == tile && node.getWire() == i)
+                    allNodes.add(makeKey(node.getTile(), node.getWire()));
             }
         }
 
